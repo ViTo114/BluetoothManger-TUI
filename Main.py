@@ -1,17 +1,8 @@
-from textual import events
 from textual.app import App
 from textual.widgets import ListItem, ListView, Label, Static
-from textual import events
-
 import subprocess
 
 
-def mostraMenuPrincipale(menu):
-    menu.styles.border = ("heavy", "white")
-    menu.border_title = "Bluetooth Manger"
-    menu.styles.width = 30
-    menu.styles.height = 7
-    menu.styles.margin = 3
 
 
 def controllaStato() -> bool:
@@ -25,22 +16,8 @@ def controllaStato() -> bool:
     return stato
 
 
-def mostraStatoCorrente(menu):
-    stato = "Bluetooth is "
 
-    if controllaStato():
-        stato = stato + "enable"
 
-    else:
-        stato = stato + "disable"
-
-    menu.update(stato)
-    menu.styles.border = ("heavy", "white")
-    menu.border_title = "Bluetooth Status"
-    menu.styles.width = 30
-    menu.styles.height = 5
-    menu.styles.padding = 1
-    menu.styles.margin = 3
 
 
 
@@ -49,6 +26,11 @@ def mostraStatoCorrente(menu):
 
 # Creiamo la sotto classe di App
 class MyApp(App):
+
+    def __init__(self):
+        super().__init__()
+        self.menuCorrente = 1
+
     CSS = """
     Screen {
         align: center middle;
@@ -68,15 +50,70 @@ class MyApp(App):
 
 
     def on_mount(self):
-        mostraMenuPrincipale(self.menuPrincipale)
-        mostraStatoCorrente(self.statoCorrente)
+        self.menuPrincipale.styles.border = ("heavy", "white")
+        self.menuPrincipale.border_title = "Bluetooth Manger"
+        self.menuPrincipale.styles.width = 30
+        self.menuPrincipale.styles.height = 7
+        self.menuPrincipale.styles.margin = 3
 
-    def _on_key(self, event):
-        if event.key == "escape":
-            self.exit()
-    
+        stato = "Bluetooth is "
 
-    
+        if controllaStato():
+            stato = stato + "enable"
+
+        else:
+            stato = stato + "disable"
+
+        self.statoCorrente.update(stato)
+        self.statoCorrente.styles.border = ("heavy", "white")
+        self.statoCorrente.border_title = "Bluetooth Status"
+        self.statoCorrente.styles.width = 30
+        self.statoCorrente.styles.height = 5
+        self.statoCorrente.styles.padding = 1
+        self.statoCorrente.styles.margin = 3
+
+
+    async def on_key(self, event):
+        if event.key == "enter" and self.menuPrincipale.index == 0:
+            self.menuCorrente = 2
+
+            self.menuPrincipale.remove()
+            self.statoCorrente.remove()
+
+            self.menuStato = (ListView(
+            ListItem(Label("ON")),
+            ListItem(Label("OFF"))))
+
+            self.menuStato.styles.border = ("heavy", "white")
+            self.menuStato.border_title = "Change Bluetooth Status"
+            self.menuStato.styles.width = 30
+            self.menuStato.styles.height = 7
+            self.menuStato.styles.margin = 3
+
+
+            stato = "Bluetooth is "
+
+            if controllaStato():
+                stato = stato + "enable"
+
+            else:
+                stato = stato + "disable"
+
+            self.statoCorrente.update(stato)
+            self.statoCorrente.styles.border = ("heavy", "white")
+            self.statoCorrente.border_title = "Bluetooth Status"
+            self.statoCorrente.styles.width = 30
+            self.statoCorrente.styles.height = 5
+            self.statoCorrente.styles.padding = 1
+            self.statoCorrente.styles.margin = 3
+
+            await self.mount(self.menuStato)
+            await self.mount(self.statoCorrente)
+
+            self.menuStato.focus()
+
+
+
 
 
 

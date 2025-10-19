@@ -1,7 +1,7 @@
 from textual.app import App
 from textual.widgets import ListItem, ListView, Label, Static
 import subprocess
-
+import os
 
 
 
@@ -15,10 +15,49 @@ def controllaStato() -> bool:
 
     return stato
 
+def mostraStato(app) -> None:
+    stato = "Bluetooth is "
 
+    if controllaStato():
+        stato = stato + "enable"
 
+    else:
+        stato = stato + "disable"
 
+    app.statoCorrente.update(stato)
+    app.statoCorrente.styles.border = ("heavy", "white")
+    app.statoCorrente.border_title = "Bluetooth Status"
+    app.statoCorrente.styles.width = 30
+    app.statoCorrente.styles.height = 5
+    app.statoCorrente.styles.padding = 1
+    app.statoCorrente.styles.margin = 3
 
+def menuPrincipale(app) -> None:
+    app.menuPrincipale.styles.border = ("heavy", "white")
+    app.menuPrincipale.border_title = "Bluetooth Manger"
+    app.menuPrincipale.styles.width = 30
+    app.menuPrincipale.styles.height = 7
+    app.menuPrincipale.styles.margin = 3
+
+def mostraMenuStato(app) -> None:
+    app.menuCorrente = 2
+
+    app.menuPrincipale.display = False
+    app.statoCorrente.display = False
+
+    app.menuStato = (ListView(
+        ListItem(Label("ON")),
+        ListItem(Label("OFF"))))
+
+    app.menuStato.styles.border = ("heavy", "white")
+    app.menuStato.border_title = "Change Bluetooth Status"
+    app.menuStato.styles.width = 30
+    app.menuStato.styles.height = 7
+    app.menuStato.styles.margin = 3
+
+    app.mount(app.menuStato)
+
+    app.menuStato.focus()
 
 
 
@@ -50,71 +89,37 @@ class MyApp(App):
 
 
     def on_mount(self):
-        self.menuPrincipale.styles.border = ("heavy", "white")
-        self.menuPrincipale.border_title = "Bluetooth Manger"
-        self.menuPrincipale.styles.width = 30
-        self.menuPrincipale.styles.height = 7
-        self.menuPrincipale.styles.margin = 3
-
-        stato = "Bluetooth is "
-
-        if controllaStato():
-            stato = stato + "enable"
-
-        else:
-            stato = stato + "disable"
-
-        self.statoCorrente.update(stato)
-        self.statoCorrente.styles.border = ("heavy", "white")
-        self.statoCorrente.border_title = "Bluetooth Status"
-        self.statoCorrente.styles.width = 30
-        self.statoCorrente.styles.height = 5
-        self.statoCorrente.styles.padding = 1
-        self.statoCorrente.styles.margin = 3
+        menuPrincipale(self)
+        mostraStato(self)
 
 
-    async def on_key(self, event):
-        if event.key == "enter" and self.menuPrincipale.index == 0:
-            self.menuCorrente = 2
+    def on_key(self, event):
+        if event.key == "enter" and self.menuPrincipale.index == 0 and self.menuCorrente == 1:
+            mostraMenuStato(self)
 
-            self.menuPrincipale.remove()
-            self.statoCorrente.remove()
+        elif event.key == "enter" and self.menuCorrente == 2 and self.menuStato.index == 0:
+            os.system("bluetoothctl power on >/dev/null 2>&1")
 
-            self.menuStato = (ListView(
-            ListItem(Label("ON")),
-            ListItem(Label("OFF"))))
+            self.menuStato.remove()
+            self.menuPrincipale.display = True
+            mostraStato(self)
+            self.statoCorrente.display = True
 
-            self.menuStato.styles.border = ("heavy", "white")
-            self.menuStato.border_title = "Change Bluetooth Status"
-            self.menuStato.styles.width = 30
-            self.menuStato.styles.height = 7
-            self.menuStato.styles.margin = 3
+            self.menuPrincipale.focus()
 
+            self.menuCorrente = 1
 
-            stato = "Bluetooth is "
+        elif event.key == "enter" and self.menuCorrente == 2 and self.menuStato.index == 1:
+            os.system("bluetoothctl power off >/dev/null 2>&1")
 
-            if controllaStato():
-                stato = stato + "enable"
+            self.menuStato.remove()
+            self.menuPrincipale.display = True
+            mostraStato(self)
+            self.statoCorrente.display = True
 
-            else:
-                stato = stato + "disable"
+            self.menuPrincipale.focus()
 
-            self.statoCorrente.update(stato)
-            self.statoCorrente.styles.border = ("heavy", "white")
-            self.statoCorrente.border_title = "Bluetooth Status"
-            self.statoCorrente.styles.width = 30
-            self.statoCorrente.styles.height = 5
-            self.statoCorrente.styles.padding = 1
-            self.statoCorrente.styles.margin = 3
-
-            await self.mount(self.menuStato)
-            await self.mount(self.statoCorrente)
-
-            self.menuStato.focus()
-
-
-
-
+            self.menuCorrente = 1
 
 
 

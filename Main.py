@@ -1,3 +1,5 @@
+import asyncio
+
 from textual.app import App
 from textual.widgets import ListItem, ListView, Label, Static
 import subprocess
@@ -70,13 +72,14 @@ def menuStato(app) -> None:
     app.menuStato.focus()
 
 def loadingScreen(app) -> None:
+
     app.loadingScreen = Static("Scannign for devices ...")
     app.loadingScreen.styles.border = ("heavy", "white")
 
     app.mount(app.loadingScreen)
 
 def scanDispositiviBluetooth() -> list:
-    comando = "bluetoothctl --timeout 20 scan on"
+    comando = "bluetoothctl --timeout 10 scan on"
 
     output = subprocess.run(comando, text=True, shell=True, capture_output=True)
 
@@ -84,22 +87,48 @@ def scanDispositiviBluetooth() -> list:
 
     return deviceList
 
-def menuListaDevice(app) -> None:
+def cleanDevicesList(devices) -> list:
+    listDevices = []
+
+    for element in devices.copy():
+        if "NEW" not in element:
+            devices.remove(element)
+
+    for element in devices:
+        component = element.split(" ")
+        listDevices.append(component[3])
+
+    return listDevices
+
+async def menuListaDevice(app) -> None:
     app.menuCorrente = 3
 
-    devices = scanDispositiviBluetooth()
+    devices = await asyncio.to_thread(scanDispositiviBluetooth)
 
-    app.listaDevice = ListView()
 
-    for index in devices:
-        app.listaDevice.append(ListItem(Label(devices[index])))
+    itemList = []
+
+    for device in cleanDevicesList(devices):
+        itemList.append(ListItem(Label(device)))
+
+    app.listaDevice = ListView(*itemList)
+
+    app.listaDevice.styles.border = ("heavy", "white")
+    app.listaDevice.border_title = "Select the device to connect to"
+    app.listaDevice.styles.width = 50
+    app.listaDevice.styles.height = 20
+    app.listaDevice.styles.padding = 1
+    app.listaDevice.styles.margin = 3
 
     app.loadingScreen.remove()
     app.mount(app.listaDevice)
 
     app.listaDevice.focus()
 
+def warningMessage(app):
+    app.warning= Static("ATTENTION: you must enable Wi-Fi to connect to a device.")
 
+    app.mount(app.warning)
 
 
 
@@ -154,13 +183,24 @@ class MyApp(App):
 
             self.menuCorrente = 1
 
+        elif event.key == "enter" and self.menuCorrente == 1 and self.menuPrincipale.index == 1 and controllaStato()==False:
+            self.menuPrincipale.remove()
+            self.statoCorrente.remove()
+
+            warningMessage(self)
+
+            self.warning.remove()
+
+            menuPrincipale(self)
+            menuStato(self)
+
         elif event.key == "enter" and self.menuCorrente == 1 and self.menuPrincipale.index == 1:
             self.menuPrincipale.remove()
             self.statoCorrente.remove()
 
             loadingScreen(self)
 
-            menuListaDevice(self)
+            self.run_worker(menuListaDevice(self))
 
 
 if __name__ == "__main__":

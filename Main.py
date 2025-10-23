@@ -1,7 +1,7 @@
 import asyncio
 
 from textual.app import App
-from textual.widgets import ListItem, ListView, Label, Static
+from textual.widgets import ListItem, ListView, Label, Static, ProgressBar
 import subprocess
 import os
 
@@ -41,6 +41,8 @@ def statoBluetooth(app) -> None:
     app.mount(app.statoCorrente)
 
 def menuPrincipale(app) -> None:
+    app.menuCorrente =1
+
     app.menuPrincipale = ListView(
         ListItem(Label("Stato")),
         ListItem(Label("Connessione"))
@@ -53,6 +55,8 @@ def menuPrincipale(app) -> None:
     app.menuPrincipale.styles.margin = 3
 
     app.mount(app.menuPrincipale)
+
+    app.menuPrincipale.focus()
 
 def menuStato(app) -> None:
     app.menuCorrente = 2
@@ -71,12 +75,29 @@ def menuStato(app) -> None:
 
     app.menuStato.focus()
 
-def loadingScreen(app) -> None:
+def scannigLoadingScreen(app) -> None:
+    app.scannigLoadingScreen = ProgressBar()
+    app.scannigLoadingScreen.styles.border = ("heavy", "white")
+    app.scannigLoadingScreen.border_title = "Scanning for devices..."
 
-    app.loadingScreen = Static("Scannign for devices ...")
-    app.loadingScreen.styles.border = ("heavy", "white")
+    app.scannigLoadingScreen.styles.width = 30
+    app.scannigLoadingScreen.styles.height = 5
+    app.scannigLoadingScreen.styles.padding = 1
+    app.scannigLoadingScreen.styles.margin = 3
 
-    app.mount(app.loadingScreen)
+    app.mount(app.scannigLoadingScreen)
+
+def connectonLoadingScreen(app) -> None:
+    app.connectionLoadingScreen = ProgressBar()
+    app.connectionLoadingScreen.styles.border = ("heavy", "white")
+    app.connectionLoadingScreen.border_title = "Connecting..."
+
+    app.connectionLoadingScreen.styles.width = 30
+    app.connectionLoadingScreen.styles.height = 5
+    app.connectionLoadingScreen.styles.padding = 1
+    app.connectionLoadingScreen.styles.margin = 3
+
+    app.mount(app.scannigLoadingScreen)
 
 def scanDispositiviBluetooth() -> list:
     comando = "bluetoothctl --timeout 10 scan on"
@@ -87,7 +108,7 @@ def scanDispositiviBluetooth() -> list:
 
     return deviceList
 
-def cleanDevicesList(devices) -> list:
+def cleanDevicesList(devices, app) -> list:
     listDevices = []
 
     for element in devices.copy():
@@ -97,6 +118,9 @@ def cleanDevicesList(devices) -> list:
     for element in devices:
         component = element.split(" ")
         listDevices.append(component[3])
+        app.listDevicesAddress.append(component[2])
+
+
 
     return listDevices
 
@@ -105,10 +129,9 @@ async def menuListaDevice(app) -> None:
 
     devices = await asyncio.to_thread(scanDispositiviBluetooth)
 
-
     itemList = []
 
-    for device in cleanDevicesList(devices):
+    for device in cleanDevicesList(devices, app):
         itemList.append(ListItem(Label(device)))
 
     app.listaDevice = ListView(*itemList)
@@ -120,16 +143,55 @@ async def menuListaDevice(app) -> None:
     app.listaDevice.styles.padding = 1
     app.listaDevice.styles.margin = 3
 
-    app.loadingScreen.remove()
+    app.scannigLoadingScreen.remove()
     app.mount(app.listaDevice)
 
     app.listaDevice.focus()
 
 def warningMessage(app):
-    app.warning= Static("ATTENTION: you must enable Wi-Fi to connect to a device.")
+    app.menuCorrente = 4
+
+    app.warning= Static("ATTENTION: you must enable Bluetooth to connect to a device. \n \n Press enter to go back")
+
+    app.warning.styles.width = 30
+    app.warning.styles.height = 10
+    app.warning.styles.padding = 1
+    app.warning.styles.margin = 3
 
     app.mount(app.warning)
 
+def connectToADevice() -> bool:
+    esito = False
+
+    connectonLoadingScreen(app)
+
+    address = app.listDevicesAddress[app.listaDevice.index]
+
+    comando = "bluetoothctl connect " + address
+
+    output = subprocess.run(comando, text=True, capture_output=True, shell=True)
+
+    if "successful" in output:
+        esito = True
+
+    return esito
+
+async def handlerConnection(app) -> None:
+    app.menuCorrente = 5
+
+    app.esitoConnessione = Static()
+
+    esito  = await asyncio.to_thread(connectToADevice())
+
+    if esito == True:
+        stato = "Connection successful"
+
+    else:
+        stato = "Error during connection"
+
+    app.esitoConnessione.update(stato)
+
+    app.mount(app.esitoConnessione)
 
 
 
@@ -139,6 +201,7 @@ class MyApp(App):
     def __init__(self):
         super().__init__()
         self.menuCorrente = 1
+        self.listDevicesAddress = []
 
     CSS = """
     Screen {
@@ -189,19 +252,33 @@ class MyApp(App):
 
             warningMessage(self)
 
+
+        elif event.key == "enter" and self.menuCorrente == 4:
             self.warning.remove()
 
             menuPrincipale(self)
-            menuStato(self)
+            statoBluetooth(self)
+
 
         elif event.key == "enter" and self.menuCorrente == 1 and self.menuPrincipale.index == 1:
             self.menuPrincipale.remove()
             self.statoCorrente.remove()
 
-            loadingScreen(self)
+            scannigLoadingScreen(self)
 
             self.run_worker(menuListaDevice(self))
 
+        elif event.key == "enter" and self.menuCorrente == 3:
+            connectonLoadingScreen(self)
+
+            self.run_worker(handlerConnection(self))
+
+
+        elif event.key == "enter" and self.menuCorrente == 5:
+            self.esitoConnessione.remove()
+
+            menuPrincipale(self)
+            statoBluetooth(self)
 
 if __name__ == "__main__":
     app = MyApp()

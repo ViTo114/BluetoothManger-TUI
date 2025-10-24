@@ -100,7 +100,7 @@ def connectonLoadingScreen(app) -> None:
     app.mount(app.scannigLoadingScreen)
 
 def scanDispositiviBluetooth() -> list:
-    comando = "bluetoothctl --timeout 10 scan on"
+    comando = "bluetoothctl --timeout 20 scan on"
 
     output = subprocess.run(comando, text=True, shell=True, capture_output=True)
 
@@ -117,8 +117,18 @@ def cleanDevicesList(devices, app) -> list:
 
     for element in devices:
         component = element.split(" ")
-        listDevices.append(component[3])
+
+        nome = ""
+
+        for i in range(len(component)):
+
+            if i >= 3:
+                nome = nome + " " + component[i]
+
+        listDevices.append(nome)
         app.listDevicesAddress.append(component[2])
+
+
 
 
 
@@ -163,15 +173,19 @@ def warningMessage(app):
 def connectToADevice() -> bool:
     esito = False
 
+    app.scannigLoadingScreen.remove()
+
     connectonLoadingScreen(app)
 
     address = app.listDevicesAddress[app.listaDevice.index]
 
-    comando = "bluetoothctl connect " + address
+    pairComand = "bluetoothctl pair " + address
+    connectionComand = "bluetoothctl connect " + address
 
-    output = subprocess.run(comando, text=True, capture_output=True, shell=True)
+    outputPair = subprocess.run(pairComand, text=True, capture_output=True, shell=True)
+    outputConnection = subprocess.run(connectionComand, text=True, capture_output=True, shell=True)
 
-    if "successful" in output:
+    if "successful" in outputPair.stdout and "yes" :
         esito = True
 
     return esito
@@ -181,7 +195,7 @@ async def handlerConnection(app) -> None:
 
     app.esitoConnessione = Static()
 
-    esito  = await asyncio.to_thread(connectToADevice())
+    esito  = await asyncio.to_thread(connectToADevice)
 
     if esito == True:
         stato = "Connection successful"
@@ -189,7 +203,14 @@ async def handlerConnection(app) -> None:
     else:
         stato = "Error during connection"
 
+    app.connectionLoadingScreen.remove()
+
     app.esitoConnessione.update(stato)
+
+    app.esitoConnessione.styles.width = 30
+    app.esitoConnessione.styles.height = 5
+    app.esitoConnessione.styles.padding = 1
+    app.esitoConnessione.styles.margin = 3
 
     app.mount(app.esitoConnessione)
 
@@ -269,6 +290,8 @@ class MyApp(App):
             self.run_worker(menuListaDevice(self))
 
         elif event.key == "enter" and self.menuCorrente == 3:
+            self.listaDevice.remove()
+
             connectonLoadingScreen(self)
 
             self.run_worker(handlerConnection(self))

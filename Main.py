@@ -10,11 +10,12 @@ import os
 def controllaStato() -> bool:
     stato = False
 
-    comando = "bluetoothctl show"
+    comandoShow = "bluetoothctl show"
 
-    output = subprocess.run(comando, text=True, capture_output=True, shell=True )
+    outputShow = subprocess.run(comandoShow, text=True, capture_output=True, shell=True )
 
-    if "PowerState: on" in output.stdout:
+
+    if "PowerState: on" in outputShow.stdout:
         stato = True
 
     return stato
@@ -22,10 +23,24 @@ def controllaStato() -> bool:
 def statoBluetooth(app) -> None:
     app.statoCorrente = Static()
 
+    comandoInfo = "bluetoothctl info"
+
+    outputInfo = subprocess.run(comandoInfo, text=True, capture_output=True, shell=True)
+
+
     stato = "Bluetooth is "
 
-    if controllaStato():
+    if controllaStato() and "Missing" in outputInfo.stdout:
         stato = stato + "enable"
+
+    elif controllaStato() and "Missing" not in outputInfo.stdout:
+        righe = outputInfo.stdout.split("\n")
+
+        for riga in righe:
+            if "Name" in riga:
+                elementi = riga.split(":")
+                stato = "Connected to\n" + elementi[1].strip()
+            break
 
     else:
         stato = stato + "disable"
@@ -34,7 +49,12 @@ def statoBluetooth(app) -> None:
     app.statoCorrente.styles.border = ("heavy", "white")
     app.statoCorrente.border_title = "Bluetooth Status"
     app.statoCorrente.styles.width = 30
-    app.statoCorrente.styles.height = 5
+
+    if "Connected" in stato:
+        app.statoCorrente.styles.height = 6
+    else:
+        app.statoCorrente.styles.height = 6
+
     app.statoCorrente.styles.padding = 1
     app.statoCorrente.styles.margin = 3
 
@@ -299,6 +319,12 @@ class MyApp(App):
 
         elif event.key == "enter" and self.menuCorrente == 5:
             self.esitoConnessione.remove()
+
+            menuPrincipale(self)
+            statoBluetooth(self)
+
+        elif event.key == "escape" and self.menuCorrente == 3:
+            self.listaDevice.remove()
 
             menuPrincipale(self)
             statoBluetooth(self)

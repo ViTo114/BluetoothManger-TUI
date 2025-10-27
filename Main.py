@@ -1,6 +1,6 @@
 import asyncio
-
 from textual.app import App
+from textual.await_complete import AwaitComplete
 from textual.widgets import ListItem, ListView, Label, Static, ProgressBar
 import subprocess
 import os
@@ -53,7 +53,7 @@ def statoBluetooth(app) -> None:
     if "Connected" in stato:
         app.statoCorrente.styles.height = 6
     else:
-        app.statoCorrente.styles.height = 6
+        app.statoCorrente.styles.height = 5
 
     app.statoCorrente.styles.padding = 1
     app.statoCorrente.styles.margin = 3
@@ -120,7 +120,7 @@ def connectonLoadingScreen(app) -> None:
     app.mount(app.scannigLoadingScreen)
 
 def scanDispositiviBluetooth() -> list:
-    comando = "bluetoothctl --timeout 20 scan on"
+    comando = "bluetoothctl --timeout 10 scan on"
 
     output = subprocess.run(comando, text=True, shell=True, capture_output=True)
 
@@ -128,14 +128,14 @@ def scanDispositiviBluetooth() -> list:
 
     return deviceList
 
-def cleanDevicesList(devices, app) -> list:
+def cleanDevicesList(devicesList, app) -> list:
     listDevices = []
 
-    for element in devices.copy():
+    for element in devicesList.copy():
         if "NEW" not in element:
-            devices.remove(element)
+            devicesList.remove(element)
 
-    for element in devices:
+    for element in devicesList:
         component = element.split(" ")
 
         nome = ""
@@ -147,10 +147,6 @@ def cleanDevicesList(devices, app) -> list:
 
         listDevices.append(nome)
         app.listDevicesAddress.append(component[2])
-
-
-
-
 
     return listDevices
 
@@ -174,9 +170,9 @@ async def menuListaDevice(app) -> None:
     app.listaDevice.styles.margin = 3
 
     app.scannigLoadingScreen.remove()
-    app.mount(app.listaDevice)
+    await app.mount(app.listaDevice)
+    await menuInfoScan(app)
 
-    app.listaDevice.focus()
 
 def warningMessage(app):
     app.menuCorrente = 4
@@ -193,10 +189,6 @@ def warningMessage(app):
 def connectToADevice() -> bool:
     esito = False
 
-    app.scannigLoadingScreen.remove()
-
-    connectonLoadingScreen(app)
-
     address = app.listDevicesAddress[app.listaDevice.index]
 
     pairComand = "bluetoothctl pair " + address
@@ -205,7 +197,7 @@ def connectToADevice() -> bool:
     outputPair = subprocess.run(pairComand, text=True, capture_output=True, shell=True)
     outputConnection = subprocess.run(connectionComand, text=True, capture_output=True, shell=True)
 
-    if "successful" in outputPair.stdout and "yes" :
+    if "successful" in outputPair.stdout and "successful" in outputConnection.stdout :
         esito = True
 
     return esito
@@ -234,6 +226,19 @@ async def handlerConnection(app) -> None:
 
     app.mount(app.esitoConnessione)
 
+def menuInfoScan(app) -> None:
+    app.shortcut = Static("Press 's' to restart the scan \nPress 'esc' to return to main menu")
+
+    app.shortcut.styles.border = ("heavy", "white")
+    app.shortcut.border_title = "Shortcut info"
+
+    app.shortcut.styles.width = 40
+    app.shortcut.styles.height = 6
+    app.shortcut.styles.padding = 1
+    app.shortcut.styles.margin = 3
+
+    app.mount(app.shortcut)
+    app.listaDevice.focus()
 
 
 # Creiamo la sotto classe di App
@@ -307,27 +312,40 @@ class MyApp(App):
 
             scannigLoadingScreen(self)
 
-            self.run_worker(menuListaDevice(self))
+            asyncio.create_task(menuListaDevice(self))
+
+        elif event.key == "escape" and self.menuCorrente == 3:
+            self.listaDevice.remove()
+            self.shortcut.remove()
+
+            menuPrincipale(self)
+            statoBluetooth(self)
+
+        elif event.key=="s" and self.menuCorrente ==3:
+            self.listaDevice.remove()
+            self.shortcut.remove()
+
+            scannigLoadingScreen(self)
+            asyncio.create_task(menuListaDevice(self))
+
 
         elif event.key == "enter" and self.menuCorrente == 3:
             self.listaDevice.remove()
+            self.shortcut.remove()
 
             connectonLoadingScreen(self)
 
-            self.run_worker(handlerConnection(self))
+            asyncio.create_task(handlerConnection(self))
 
 
         elif event.key == "enter" and self.menuCorrente == 5:
+            connectonLoadingScreen(self)
             self.esitoConnessione.remove()
 
             menuPrincipale(self)
             statoBluetooth(self)
 
-        elif event.key == "escape" and self.menuCorrente == 3:
-            self.listaDevice.remove()
 
-            menuPrincipale(self)
-            statoBluetooth(self)
 
 if __name__ == "__main__":
     app = MyApp()

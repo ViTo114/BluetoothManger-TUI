@@ -65,7 +65,8 @@ def menuPrincipale(app) -> None:
 
     app.menuPrincipale = ListView(
         ListItem(Label("Stato")),
-        ListItem(Label("Connessione"))
+        ListItem(Label("Connessione")),
+        ListItem(Label("Paired devices"))
     )
 
     app.menuPrincipale.styles.border = ("heavy", "white")
@@ -117,7 +118,7 @@ def connectonLoadingScreen(app) -> None:
     app.connectionLoadingScreen.styles.padding = 1
     app.connectionLoadingScreen.styles.margin = 3
 
-    app.mount(app.scannigLoadingScreen)
+    app.mount(app.connectionLoadingScreen)
 
 def scanDispositiviBluetooth() -> list:
     comando = "bluetoothctl --timeout 10 scan on"
@@ -170,8 +171,9 @@ async def menuListaDevice(app) -> None:
     app.listaDevice.styles.margin = 3
 
     app.scannigLoadingScreen.remove()
-    await app.mount(app.listaDevice)
-    await menuInfoScan(app)
+    app.mount(app.listaDevice)
+    app.listaDevice.focus()
+    menuInfo(app)
 
 
 def warningMessage(app):
@@ -210,12 +212,10 @@ async def handlerConnection(app) -> None:
     esito  = await asyncio.to_thread(connectToADevice)
 
     if esito == True:
-        stato = "Connection successful"
+        stato = "Connection successful \n\nPresse 'enter' to return to main menu"
 
     else:
-        stato = "Error during connection"
-
-    app.connectionLoadingScreen.remove()
+        stato = "Error during connection  \n\nPresse 'enter' to return to main menu"
 
     app.esitoConnessione.update(stato)
 
@@ -224,10 +224,17 @@ async def handlerConnection(app) -> None:
     app.esitoConnessione.styles.padding = 1
     app.esitoConnessione.styles.margin = 3
 
+    app.connectionLoadingScreen.remove()
     app.mount(app.esitoConnessione)
 
-def menuInfoScan(app) -> None:
-    app.shortcut = Static("Press 's' to restart the scan \nPress 'esc' to return to main menu")
+
+def menuInfo(app) -> None:
+    if app.menuCorrente == 5:
+        app.shortcut = Static("Press 's' to restart the scan \nPress 'esc' to return to main menu")
+
+    elif app.menuCorrente == 6:
+        app.shortcut = Static("Press 'r' to remove device \nPress 'enter' to connect \nPress 'esc' to return to main menu")
+
 
     app.shortcut.styles.border = ("heavy", "white")
     app.shortcut.border_title = "Shortcut info"
@@ -238,7 +245,41 @@ def menuInfoScan(app) -> None:
     app.shortcut.styles.margin = 3
 
     app.mount(app.shortcut)
-    app.listaDevice.focus()
+
+
+def pairedMenu(app) -> None:
+    app.menuCorrente = 6
+
+    nameDeviceList = []
+
+    comando = "bluetoothctl devices"
+
+    pairedList = subprocess.run(comando, text=True, shell=True, capture_output=True).stdout.split("\n")
+
+    for device in pairedList:
+        if device != "":
+            element = device.split(" ")
+            name = ""
+            for i in range(len(element)):
+                if i > 1:
+                    name = name + " " + element[i]
+
+            nameDeviceList.append(ListItem(Label(name)))
+
+
+    app.pairedDevices = ListView(*nameDeviceList)
+
+    app.pairedDevices.styles.border = ("heavy", "white")
+    app.pairedDevices.border_title = "Chose a device"
+
+    app.pairedDevices.styles.width = 30
+    app.pairedDevices.styles.height = 5
+    app.pairedDevices.styles.padding = 1
+    app.pairedDevices.styles.margin = 3
+
+    app.mount(app.pairedDevices)
+    app.pairedDevices.focus()
+
 
 
 # Creiamo la sotto classe di App
@@ -339,11 +380,17 @@ class MyApp(App):
 
 
         elif event.key == "enter" and self.menuCorrente == 5:
-            connectonLoadingScreen(self)
             self.esitoConnessione.remove()
 
             menuPrincipale(self)
             statoBluetooth(self)
+
+        elif event.key == "enter" and self.menuCorrente == 1  and self.menuPrincipale.index == 2:
+            self.menuPrincipale.remove()
+            self.statoCorrente.remove()
+
+            pairedMenu(self)
+            menuInfo(self)
 
 
 

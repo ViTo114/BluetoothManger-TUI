@@ -1,6 +1,5 @@
 import asyncio
 from textual.app import App
-from textual.await_complete import AwaitComplete
 from textual.widgets import ListItem, ListView, Label, Static, ProgressBar
 import subprocess
 import os
@@ -40,7 +39,7 @@ def statoBluetooth(app) -> None:
             if "Name" in riga:
                 elementi = riga.split(":")
                 stato = "Connected to\n" + elementi[1].strip()
-            break
+                break
 
     else:
         stato = stato + "disable"
@@ -175,7 +174,6 @@ async def menuListaDevice(app) -> None:
     app.listaDevice.focus()
     menuInfo(app)
 
-
 def warningMessage(app):
     app.menuCorrente = 4
 
@@ -227,9 +225,8 @@ async def handlerConnection(app) -> None:
     app.connectionLoadingScreen.remove()
     app.mount(app.esitoConnessione)
 
-
 def menuInfo(app) -> None:
-    if app.menuCorrente == 5:
+    if app.menuCorrente == 3:
         app.shortcut = Static("Press 's' to restart the scan \nPress 'esc' to return to main menu")
 
     elif app.menuCorrente == 6:
@@ -240,12 +237,16 @@ def menuInfo(app) -> None:
     app.shortcut.border_title = "Shortcut info"
 
     app.shortcut.styles.width = 40
-    app.shortcut.styles.height = 6
+
+    if app.menuCorrente == 5:
+        app.shortcut.styles.height = 6
+    else:
+        app.shortcut.styles.height = 7
+
     app.shortcut.styles.padding = 1
     app.shortcut.styles.margin = 3
 
     app.mount(app.shortcut)
-
 
 def pairedMenu(app) -> None:
     app.menuCorrente = 6
@@ -258,8 +259,11 @@ def pairedMenu(app) -> None:
 
     for device in pairedList:
         if device != "":
-            element = device.split(" ")
             name = ""
+            element = device.split(" ")
+
+            app.listPairedAddress.append(element[1])
+
             for i in range(len(element)):
                 if i > 1:
                     name = name + " " + element[i]
@@ -273,12 +277,22 @@ def pairedMenu(app) -> None:
     app.pairedDevices.border_title = "Chose a device"
 
     app.pairedDevices.styles.width = 30
-    app.pairedDevices.styles.height = 5
+    app.pairedDevices.styles.height = 7
     app.pairedDevices.styles.padding = 1
     app.pairedDevices.styles.margin = 3
 
     app.mount(app.pairedDevices)
     app.pairedDevices.focus()
+
+def removePaired(app) -> None:
+    if len(app.listPairedAddress) != 0:
+        comando = "bluetoothctl remove"
+
+        comando = comando + " " + str(app.listPairedAddress[app.pairedDevices.index])
+
+        os.system(comando)
+
+
 
 
 
@@ -289,6 +303,7 @@ class MyApp(App):
         super().__init__()
         self.menuCorrente = 1
         self.listDevicesAddress = []
+        self.listPairedAddress = []
 
     CSS = """
     Screen {
@@ -391,6 +406,23 @@ class MyApp(App):
 
             pairedMenu(self)
             menuInfo(self)
+
+        elif event.key == "escape" and self.menuCorrente == 6:
+            self.shortcut.remove()
+            self.pairedDevices.remove()
+
+            menuPrincipale(self)
+            statoBluetooth(self)
+
+        elif event.key == "r" and self.menuCorrente == 6:
+            removePaired(self)
+
+            self.shortcut.remove()
+            self.pairedDevices.remove()
+
+            pairedMenu(self)
+            menuInfo(self)
+
 
 
 

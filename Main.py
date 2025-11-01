@@ -189,16 +189,27 @@ def warningMessage(app):
 def connectToADevice() -> bool:
     esito = False
 
-    address = app.listDevicesAddress[app.listaDevice.index]
+    if app.menuCorrente == 5:
+        address = app.listDevicesAddress[app.listaDevice.index]
+        pairComand = "bluetoothctl pair " + address
 
-    pairComand = "bluetoothctl pair " + address
+    else:
+        address = app.listPairedAddress[app.pairedDevices.index]
+
     connectionComand = "bluetoothctl connect " + address
 
-    outputPair = subprocess.run(pairComand, text=True, capture_output=True, shell=True)
-    outputConnection = subprocess.run(connectionComand, text=True, capture_output=True, shell=True)
+    if app.menuCorrente == 5:
+        outputPair = subprocess.run(pairComand, text=True, capture_output=True, shell=True)
+        outputConnection = subprocess.run(connectionComand, text=True, capture_output=True, shell=True)
 
-    if "successful" in outputPair.stdout and "successful" in outputConnection.stdout :
-        esito = True
+        if "successful" in outputPair.stdout and "successful" in outputConnection.stdout :
+            esito = True
+
+    else:
+        outputConnection = subprocess.run(connectionComand, text=True, capture_output=True, shell=True)
+
+        if "successful" in outputConnection.stdout :
+            esito = True
 
     return esito
 
@@ -207,7 +218,10 @@ async def handlerConnection(app) -> None:
 
     app.esitoConnessione = Static()
 
-    esito  = await asyncio.to_thread(connectToADevice)
+    for test in range(3):
+        esito  = await asyncio.to_thread(connectToADevice)
+        if esito == True:
+            break
 
     if esito == True:
         stato = "Connection successful \n\nPresse 'enter' to return to main menu"
@@ -253,7 +267,7 @@ def pairedMenu(app) -> None:
 
     nameDeviceList = []
 
-    comando = "bluetoothctl devices"
+    comando = "bluetoothctl devices Paired"
 
     pairedList = subprocess.run(comando, text=True, shell=True, capture_output=True).stdout.split("\n")
 
@@ -290,7 +304,7 @@ def removePaired(app) -> None:
 
         comando = comando + " " + str(app.listPairedAddress[app.pairedDevices.index])
 
-        os.system(comando)
+        subprocess.run(comando, shell=True, capture_output=True)
 
 
 
@@ -420,8 +434,16 @@ class MyApp(App):
             self.shortcut.remove()
             self.pairedDevices.remove()
 
+
             pairedMenu(self)
             menuInfo(self)
+
+        elif (event.key == "enter" or event.key == "r") and self.menuCorrente == 6 and len(self.listPairedAddress) == 0:
+            pass
+
+        elif event.key == "enter" and self.menuCorrente == 6:
+            connectToADevice()
+            asyncio.create_task(handlerConnection(self))
 
 
 

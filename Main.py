@@ -175,9 +175,13 @@ async def menuListaDevice(app) -> None:
     menuInfo(app)
 
 def warningMessage(app):
-    app.menuCorrente = 4
+    if app.menuCorrente == 4:
+        app.warning = Static("ATTENTION: you must enable Bluetooth to connect to a device. \n \n Press enter to go back")
 
-    app.warning= Static("ATTENTION: you must enable Bluetooth to connect to a device. \n \n Press enter to go back")
+    else:
+        app.warning = Static("ATTENTION: you must enable Bluetooth to connect to remove a device. \n \n Press enter to go back")
+
+    app.menuCorrente = 0
 
     app.warning.styles.width = 30
     app.warning.styles.height = 10
@@ -214,7 +218,6 @@ def connectToADevice() -> bool:
     return esito
 
 async def handlerConnection(app) -> None:
-    app.menuCorrente = 5
 
     app.esitoConnessione = Static()
 
@@ -304,13 +307,12 @@ def removePaired(app) -> None:
 
         comando = comando + " " + str(app.listPairedAddress[app.pairedDevices.index])
 
-        subprocess.run(comando, shell=True, capture_output=True)
+        os.system(comando + " >/dev/null 2>&1")
 
 
 
 
 
-# Creiamo la sotto classe di App
 class MyApp(App):
 
     def __init__(self):
@@ -362,14 +364,14 @@ class MyApp(App):
 
             self.menuCorrente = 1
 
-        elif event.key == "enter" and self.menuCorrente == 1 and self.menuPrincipale.index == 1 and controllaStato()==False:
+        elif event.key == "enter" and self.menuCorrente == 1 and (self.menuPrincipale.index == 1 or self.menuPrincipale.index == 2) and controllaStato()==False:
             self.menuPrincipale.remove()
             self.statoCorrente.remove()
 
             warningMessage(self)
 
 
-        elif event.key == "enter" and self.menuCorrente == 4:
+        elif event.key == "enter" and self.menuCorrente == 0:
             self.warning.remove()
 
             menuPrincipale(self)
@@ -429,6 +431,8 @@ class MyApp(App):
             statoBluetooth(self)
 
         elif event.key == "r" and self.menuCorrente == 6:
+            self.pairedDevices.remove_items([self.pairedDevices.index])
+
             removePaired(self)
 
             self.shortcut.remove()
@@ -442,8 +446,13 @@ class MyApp(App):
             pass
 
         elif event.key == "enter" and self.menuCorrente == 6:
-            connectToADevice()
+            self.shortcut.remove()
+            self.pairedDevices.remove()
+
+            connectonLoadingScreen(self)
+
             asyncio.create_task(handlerConnection(self))
+
 
 
 

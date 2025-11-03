@@ -193,7 +193,7 @@ def warningMessage(app):
 def connectToADevice() -> bool:
     esito = False
 
-    if app.menuCorrente == 5:
+    if app.menuCorrente == 3:
         address = app.listDevicesAddress[app.listaDevice.index]
         pairComand = "bluetoothctl pair " + address
 
@@ -241,6 +241,7 @@ async def handlerConnection(app) -> None:
 
     app.connectionLoadingScreen.remove()
     app.mount(app.esitoConnessione)
+    app.menuCorrente = 7
 
 def menuInfo(app) -> None:
     if app.menuCorrente == 3:
@@ -410,7 +411,7 @@ class MyApp(App):
             asyncio.create_task(handlerConnection(self))
 
 
-        elif event.key == "enter" and self.menuCorrente == 5:
+        elif event.key == "enter" and self.menuCorrente == 7:
             self.esitoConnessione.remove()
 
             menuPrincipale(self)

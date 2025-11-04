@@ -88,6 +88,7 @@ def menuStato(app) -> None:
 
     app.menuStato.styles.border = ("heavy", "white")
     app.menuStato.border_title = "Change Bluetooth Status"
+    app.menuStato.styles.background = "black"
     app.menuStato.styles.width = 30
     app.menuStato.styles.height = 7
     app.menuStato.styles.margin = 3
@@ -113,7 +114,7 @@ def connectonLoadingScreen(app) -> None:
     app.connectionLoadingScreen = ProgressBar()
     app.connectionLoadingScreen.styles.border = ("heavy", "white")
     app.connectionLoadingScreen.border_title = "Connecting..."
-    app.connectionLoadingScreen.styles.background = "blakc"
+    app.connectionLoadingScreen.styles.background = "black"
 
     app.connectionLoadingScreen.styles.width = 30
     app.connectionLoadingScreen.styles.height = 5
@@ -208,10 +209,12 @@ def connectToADevice() -> bool:
 
     if app.menuCorrente == 5:
         outputPair = subprocess.run(pairComand, text=True, capture_output=True, shell=True)
-        outputConnection = subprocess.run(connectionComand, text=True, capture_output=True, shell=True)
 
-        if "successful" in outputPair.stdout and "successful" in outputConnection.stdout :
-            esito = True
+        if "successful" in outputPair.stdout:
+            outputConnection = subprocess.run(connectionComand, text=True, capture_output=True, shell=True)
+
+            if "successful" in outputConnection.stdout :
+                esito = True
 
     else:
         outputConnection = subprocess.run(connectionComand, text=True, capture_output=True, shell=True)
@@ -437,6 +440,10 @@ class MyApp(App):
             menuPrincipale(self)
             statoBluetooth(self)
 
+        elif (event.key == "enter" or event.key == "r") and self.menuCorrente == 6 and len(self.listPairedAddress) == 0:
+            pass
+
+
         elif event.key == "r" and self.menuCorrente == 6:
             self.pairedDevices.remove_items([self.pairedDevices.index])
 
@@ -448,9 +455,6 @@ class MyApp(App):
 
             pairedMenu(self)
             menuInfo(self)
-
-        elif (event.key == "enter" or event.key == "r") and self.menuCorrente == 6 and len(self.listPairedAddress) == 0:
-            pass
 
         elif event.key == "enter" and self.menuCorrente == 6:
             self.shortcut.remove()

@@ -63,13 +63,14 @@ def menuPrincipale(app) -> None:
     app.menuCorrente =1
 
     app.menuPrincipale = ListView(
-        ListItem(Label("Stato")),
-        ListItem(Label("Connessione")),
+        ListItem(Label("Status")),
+        ListItem(Label("Scan")),
         ListItem(Label("Paired devices"))
     )
 
     app.menuPrincipale.styles.border = ("heavy", "white")
     app.menuPrincipale.border_title = "Bluetooth Manger"
+    app.menuPrincipale.styles.background = "black"
     app.menuPrincipale.styles.width = 30
     app.menuPrincipale.styles.height = 7
     app.menuPrincipale.styles.margin = 3
@@ -99,6 +100,7 @@ def scannigLoadingScreen(app) -> None:
     app.scannigLoadingScreen = ProgressBar()
     app.scannigLoadingScreen.styles.border = ("heavy", "white")
     app.scannigLoadingScreen.border_title = "Scanning for devices..."
+    app.scannigLoadingScreen.styles.background = "black"
 
     app.scannigLoadingScreen.styles.width = 30
     app.scannigLoadingScreen.styles.height = 5
@@ -111,6 +113,7 @@ def connectonLoadingScreen(app) -> None:
     app.connectionLoadingScreen = ProgressBar()
     app.connectionLoadingScreen.styles.border = ("heavy", "white")
     app.connectionLoadingScreen.border_title = "Connecting..."
+    app.connectionLoadingScreen.styles.background = "blakc"
 
     app.connectionLoadingScreen.styles.width = 30
     app.connectionLoadingScreen.styles.height = 5
@@ -164,6 +167,7 @@ async def menuListaDevice(app) -> None:
 
     app.listaDevice.styles.border = ("heavy", "white")
     app.listaDevice.border_title = "Select the device to connect to"
+    app.listaDevice.styles.background = "black"
     app.listaDevice.styles.width = 50
     app.listaDevice.styles.height = 20
     app.listaDevice.styles.padding = 1
@@ -253,6 +257,7 @@ def menuInfo(app) -> None:
 
     app.shortcut.styles.border = ("heavy", "white")
     app.shortcut.border_title = "Shortcut info"
+    app.shortcut.styles.background = "black"
 
     app.shortcut.styles.width = 40
 
@@ -293,6 +298,7 @@ def pairedMenu(app) -> None:
 
     app.pairedDevices.styles.border = ("heavy", "white")
     app.pairedDevices.border_title = "Chose a device"
+    app.pairedDevices.styles.background = "black"
 
     app.pairedDevices.styles.width = 30
     app.pairedDevices.styles.height = 7

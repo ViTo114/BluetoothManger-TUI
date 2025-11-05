@@ -20,7 +20,7 @@ Bluetooth TUI Manager is a terminal application that provides an intuitive inter
 
 ---
 
-##Screenshot
+## Screenshot
 
 ![screen 1](Screenshot/scrennshot1.png)
 ![screen 2](Screenshot/screenshot2.png)

@@ -49,8 +49,8 @@ pip install textual
 
 3. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/bluetooth-tui-manager.git
-cd bluetooth-tui-manager
+git clone https://github.com/ViTo114/BluetoothManger-TUI.git
+cd BluetoothManger-TUI
 ```
 
 ---

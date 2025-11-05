@@ -60,7 +60,7 @@ cd BluetoothManger-TUI
 Start the application with:
 
 ```bash
-python bluetoothTUI.py
+python BluetoothManager.py
 ```
 
 ---

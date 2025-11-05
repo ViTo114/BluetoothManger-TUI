@@ -5,6 +5,7 @@ A text-based user interface (TUI) for managing Bluetooth connections on Linux, b
 ## Table of Contents
 
 - [Description](#description)
+- [Screenshot](#screenshot)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -16,6 +17,12 @@ A text-based user interface (TUI) for managing Bluetooth connections on Linux, b
 ## Description
 
 Bluetooth TUI Manager is a terminal application that provides an intuitive interface to manage Bluetooth devices through `bluetoothctl`. It allows you to control Bluetooth status, scan for available devices, manage paired devices, and establish connections in a simple and fast way.
+
+---
+
+##Screenshot
+![alt text](http://home/vito/Scrivania/GitHub/BluetoothManger-TUI/Screenshot/scrennshot1.png)
+![alt text](http:///home/vito/Scrivania/GitHub/BluetoothManger-TUI/Screenshot/screenshot2.png)
 
 ---
 

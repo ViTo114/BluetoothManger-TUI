@@ -207,7 +207,7 @@ def connectToADevice() -> bool:
 
     connectionComand = "bluetoothctl connect " + address
 
-    if app.menuCorrente == 5:
+    if app.menuCorrente == 3:
         outputPair = subprocess.run(pairComand, text=True, capture_output=True, shell=True)
 
         if "successful" in outputPair.stdout:
@@ -264,7 +264,7 @@ def menuInfo(app) -> None:
 
     app.shortcut.styles.width = 40
 
-    if app.menuCorrente == 5:
+    if app.menuCorrente == 3:
         app.shortcut.styles.height = 6
     else:
         app.shortcut.styles.height = 7

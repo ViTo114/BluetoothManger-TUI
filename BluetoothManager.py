@@ -134,6 +134,7 @@ def scanDispositiviBluetooth() -> list:
 
 def cleanDevicesList(devicesList, app) -> list:
     listDevices = []
+    app.listDevicesAddress = []
 
     for element in devicesList.copy():
         if "NEW" not in element:
@@ -147,9 +148,10 @@ def cleanDevicesList(devicesList, app) -> list:
         for i in range(len(component)):
 
             if i >= 3:
+
                 nome = nome + " " + component[i]
 
-        listDevices.append(nome)
+        listDevices.append(nome.lstrip())
         app.listDevicesAddress.append(component[2])
 
     return listDevices
